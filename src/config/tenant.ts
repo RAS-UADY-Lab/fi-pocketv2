@@ -58,6 +58,8 @@ export interface TenantConfig {
     directorio: boolean;
     archivo: boolean;
     portales: boolean;
+    tieeenda: boolean,
+    perfil: boolean,
   };
   comunidades: Comunidad[];
   edificios: Record<string, Edificio>;
@@ -86,6 +88,8 @@ export const tenantConfig: TenantConfig = {
     directorio: true,
     archivo: true,
     portales: true,
+    tieeenda: true,
+    perfil:true,
   },
 
   // --- COMUNIDADES Y REDES SOCIALES (Dashboard) ---

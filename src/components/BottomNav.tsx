@@ -52,6 +52,24 @@ export default function BottomNav() {
             </Link>
           </li>
         )}
+
+        {modulos.tieeenda && (
+          <li>
+            <Link href="/tieeenda" className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors">
+              <i className="icon-dove text-xl"></i>
+              <span>TIEEEnda</span>
+            </Link>
+          </li>
+        )}
+
+        {modulos.perfil && (
+          <li>
+            <Link href="/perfil" className="flex flex-col items-center gap-1 hover:text-blue-600 transition-colors">
+              <i className="icon-user text-xl"></i>
+              <span>Perfil</span>
+            </Link>
+          </li>
+        )}
         
       </ul>
     </nav>

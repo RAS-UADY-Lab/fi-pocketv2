@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { tenantConfig, Plataforma } from "@/config/tenant";
+import { createClient } from "@/lib/supabase"; // Importamos Supabase
 
-// Filtros de plataformas soportadas
 const filtrosPlataforma: { id: Plataforma; etiqueta: string }[] = [
   { id: "facebook", etiqueta: "Facebook" },
   { id: "instagram", etiqueta: "Instagram" },
@@ -15,17 +15,74 @@ const filtrosPlataforma: { id: Plataforma; etiqueta: string }[] = [
 export default function HomePage() {
   const { identidad, modulos, comunidades } = tenantConfig;
   const [plataformaActiva, setPlataformaActiva] = useState<Plataforma>("facebook");
+  
+  // Estados para el usuario
+  const [usuario, setUsuario] = useState<any>(null);
+  const supabase = createClient();
 
-  // Filtramos dinámicamente las comunidades según la red seleccionada
+  // Verificamos si hay una sesión activa al cargar la página
+  useEffect(() => {
+    const obtenerSesion = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUsuario(session?.user || null);
+    };
+    obtenerSesion();
+
+    // Escuchamos si el usuario inicia o cierra sesión en tiempo real
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUsuario(session?.user || null);
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, [supabase.auth]);
+
   const comunidadesFiltradas = comunidades.filter(
     (comunidad) => comunidad.plataformas[plataformaActiva]
   );
 
+  // Función para cerrar sesión
+  const cerrarSesion = async () => {
+    await supabase.auth.signOut();
+  };
+
   return (
-    // Agregamos custom-scrollbar al contenedor principal
     <main className="flex flex-col h-full max-w-5xl mx-auto p-4 md:p-8 overflow-y-auto custom-scrollbar pb-24 md:pb-8">
       
-      {/* Tarjeta de Bienvenida Dinámica */}
+      {/* --- NUEVA BARRA DE ESTADO DEL USUARIO --- */}
+      <div className="flex justify-between items-center mb-6 flex-shrink-0 bg-white border border-slate-200 p-3 md:p-4 rounded-2xl shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-500">
+            <i className="icon-user text-lg"></i>
+          </div>
+          <div>
+            {usuario ? (
+              <>
+                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Sesión Iniciada</p>
+                <p className="text-sm font-bold text-slate-800 truncate max-w-[150px] md:max-w-xs">{usuario.email}</p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-bold text-slate-800">Modo Invitado</p>
+                <p className="text-xs text-slate-500">Regístrate para usar funciones personalizadas y obtener acceso a la TIEEEnda</p>
+              </>
+            )}
+          </div>
+        </div>
+
+        {usuario ? (
+          <button onClick={cerrarSesion} className="px-4 py-2 bg-red-50 text-red-600 font-bold text-sm rounded-xl hover:bg-red-100 transition-colors">
+            Salir
+          </button>
+        ) : (
+          <Link href="/login" className="px-4 py-2 bg-blue-600 text-white font-bold text-sm rounded-xl hover:bg-blue-700 hover:shadow-md transition-all">
+            Ingresar
+          </Link>
+        )}
+      </div>
+
+      {/* Tarjeta de Bienvenida */}
       <header className="mb-8 bg-blue-600 text-white rounded-3xl p-6 md:p-10 shadow-lg relative overflow-hidden flex-shrink-0">
         <div className="relative z-10">
           <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-2">
@@ -151,7 +208,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
+      
     </main>
   );
 }

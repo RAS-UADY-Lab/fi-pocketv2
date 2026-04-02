@@ -4,6 +4,7 @@ import "./globals.css";
 import "./icomoon.css";
 import BottomNav from "@/components/BottomNav";
 import SideNav from "@/components/SideNav";
+import { CartProvider } from "@/context/CartContext";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -35,7 +36,7 @@ export default function RootLayout({
     <html lang="es">
       {/* h-[100dvh] garantiza que ocupe exactamente la pantalla visible, ni un pixel más */}
       <body className={`${inter.className} bg-slate-50 text-slate-900 overflow-hidden flex flex-col md:flex-row h-[100dvh] w-full`}>
-        
+        <CartProvider>
         <SideNav />
 
         {/* El contenedor principal ahora maneja su propio scroll internamente */}
@@ -47,6 +48,7 @@ export default function RootLayout({
         <div className="md:hidden flex-shrink-0">
           <BottomNav />
         </div>
+        </CartProvider>
       </body>
     </html>
   );

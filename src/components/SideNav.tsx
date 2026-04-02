@@ -20,6 +20,8 @@ export default function SideNav() {
           {modulos.directorio && <li><Link href="/directorio" className="flex items-center gap-3 p-3 rounded-xl hover:bg-blue-50"><i className="icon-directory text-lg"></i> Directorio</Link></li>}
           {modulos.archivo && <li><Link href="/archivo" className="flex items-center gap-3 p-3 rounded-xl hover:bg-blue-50"><i className="icon-archive text-lg"></i> Archivo</Link></li>}
           {modulos.portales && <li><Link href="/portales" className="flex items-center gap-3 p-3 rounded-xl hover:bg-blue-50"><i className="icon-laptop text-lg"></i> Portales</Link></li>}
+          {modulos.tieeenda && <li><Link href="/tieeenda" className="flex items-center gap-3 p-3 rounded-xl hover:bg-blue-50"><i className="icon-dove text-lg"></i> TIEEEnda</Link></li>}
+          {modulos.perfil && <li><Link href="/perfil" className="flex items-center gap-3 p-3 rounded-xl hover:bg-blue-50"><i className="icon-user text-lg"></i> Perfil</Link></li>}
         </ul>
       </nav>
     </aside>
