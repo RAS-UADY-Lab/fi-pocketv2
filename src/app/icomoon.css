@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'icomoon';
-  src:  url('/fonts/icomoon.eot?xcgrxv');
-  src:  url('/fonts/icomoon.eot?xcgrxv#iefix') format('embedded-opentype'),
-    url('/fonts/icomoon.ttf?xcgrxv') format('truetype'),
-    url('/fonts/icomoon.woff?xcgrxv') format('woff'),
-    url('/fonts/icomoon.svg?xcgrxv#icomoon') format('svg');
+  src:  url('/fonts/icomoon.eot?3u1bhb');
+  src:  url('/fonts/icomoon.eot?3u1bhb#iefix') format('embedded-opentype'),
+    url('/fonts/icomoon.ttf?3u1bhb') format('truetype'),
+    url('/fonts/icomoon.woff?3u1bhb') format('woff'),
+    url('/fonts/icomoon.svg?3u1bhb#icomoon') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -25,13 +25,67 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.icon-app-logo:before {
+  content: "\e930";
+}
+.icon-link-solid-full:before {
+  content: "\e91f";
+}
+.icon-wifi-solid-full:before {
+  content: "\e920";
+}
+.icon-whatsapp-brands-solid-full:before {
+  content: "\e921";
+}
+.icon-clock-rotate-left-solid-full:before {
+  content: "\e922";
+}
+.icon-handshake-solid-full:before {
+  content: "\e923";
+}
+.icon-bell-solid-full:before {
+  content: "\e924";
+}
+.icon-store-solid-full:before {
+  content: "\e925";
+}
+.icon-circle-info-solid-full:before {
+  content: "\e926";
+}
+.icon-lock-solid-full:before {
+  content: "\e927";
+}
+.icon-check-solid-full:before {
+  content: "\e928";
+}
+.icon-minus-solid-full:before {
+  content: "\e929";
+}
+.icon-plus-solid-full:before {
+  content: "\e92a";
+}
+.icon-trash-solid-full:before {
+  content: "\e92b";
+}
+.icon-cart-shopping-solid-full:before {
+  content: "\e92c";
+}
+.icon-IEEE:before {
+  content: "\e92d";
+}
+.icon-RAS:before {
+  content: "\e92e";
+}
+.icon-WIE:before {
+  content: "\e92f";
+}
 .icon-archive:before {
   content: "\e900";
 }
 .icon-calendar:before {
   content: "\e901";
 }
-.icon-career:before {
+.icon-career-flag:before {
   content: "\e902";
 }
 .icon-circle:before {
@@ -115,6 +169,6 @@
 .icon-user:before {
   content: "\e91d";
 }
-.icon-xmark:before {
+.icon-close:before {
   content: "\e91e";
 }

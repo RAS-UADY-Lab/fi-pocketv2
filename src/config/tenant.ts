@@ -76,9 +76,9 @@ export const tenantConfig: TenantConfig = {
   identidad: {
     nombre: "FI Pocket",
     organizacion: "Capítulo RAS UADY",
-    logoIcono: "icon-landmark",
-    colorPrimario: "#00a2c3", // Cyan UADY (Color base para edificios estáticos)
-    colorActivo: "#1e40af",   // Azul oscuro (Color cuando se selecciona un edificio)
+    logoIcono: "icon-app-logo",
+    colorPrimario: "#98002e", // Cyan UADY (Color base para edificios estáticos)
+    colorActivo: "#61116a",   // Azul oscuro (Color cuando se selecciona un edificio)
   },
 
   // --- INTERRUPTORES DE MÓDULOS ---
@@ -107,8 +107,8 @@ export const tenantConfig: TenantConfig = {
     { 
       nombre: "IEEE RAS UADY", 
       handle: "@RAS.UADY", 
-      color: "bg-blue-50 text-blue-700 border-blue-200",
-      iconColor: "text-blue-600",
+      color: "bg-primario text-primario border-primario",
+      iconColor: "text-primario",
       plataformas: { 
         facebook: "https://www.facebook.com/RAS.UADY",
         instagram: "https://www.instagram.com/ras_uady" 
@@ -252,9 +252,9 @@ export const tenantConfig: TenantConfig = {
       url: "https://es.uadyvirtual.uady.mx/",
       icono: "icon-laptop",
       estilos: {
-        fondo: "bg-gradient-to-br from-blue-600 to-blue-800",
-        texto: "text-blue-100",
-        boton: "text-blue-700 hover:bg-blue-50"
+        fondo: "bg-gradient-to-br from-primario to-primario",
+        texto: "text-primario",
+        boton: "text-primario hover:bg-primario"
       }
     }
   ]

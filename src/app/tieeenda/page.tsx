@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
-import { useRouter } from "next/navigation"; // <--- Importante: Importar el router
+import { useRouter } from "next/navigation"; 
 import Link from "next/link";
 import { useCart } from "@/context/CartContext";
 
 export default function TIEEEndaPage() {
   const supabase = createClient();
-  const router = useRouter(); // <--- Inicializar el router
+  const router = useRouter(); 
   const { addToCart, totalItems } = useCart();
 
   const [productos, setProductos] = useState<any[]>([]);
@@ -57,7 +57,7 @@ export default function TIEEEndaPage() {
           TIEEEnda
         </h1>
         <p className="text-slate-500 font-medium">
-          Recursos y componentes para la comunidad IEEE UADY.
+          Recursos y componentes para la comunidad.
         </p>
       </header>
 
@@ -65,10 +65,11 @@ export default function TIEEEndaPage() {
       <section className="flex flex-col md:flex-row gap-4 mb-8">
         <div className="relative flex-1">
           <i className="icon-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+          {/* CORRECCIÓN: Arreglado el typo focus:ring-primario0 y agregada la opacidad */}
           <input
             type="text"
             placeholder="¿Qué componente buscas?"
-            className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none shadow-sm transition-all"
+            className="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-2xl focus:ring-2 focus:ring-primario/20 outline-none shadow-sm transition-all font-medium"
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
           />
@@ -78,10 +79,10 @@ export default function TIEEEndaPage() {
             <button
               key={cat}
               onClick={() => setCategoriaSel(cat)}
-              className={`px-5 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
+              className={`px-5 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap active:scale-95 cursor-pointer ${
                 categoriaSel === cat
-                  ? "bg-blue-600 text-white shadow-md"
-                  : "bg-white text-slate-500 border border-slate-100 hover:bg-slate-50"
+                  ? "bg-gradient-to-t from-secundario to-primario text-white shadow-md"
+                  : "bg-white text-slate-500 border border-slate-200 hover:bg-slate-50"
               }`}
             >
               {cat}
@@ -93,7 +94,7 @@ export default function TIEEEndaPage() {
       {/* Galería de Productos */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20 text-slate-400 animate-pulse">
-          <i className="icon-laptop text-5xl mb-4"></i>
+          <i className="icon-store-solid-full text-5xl mb-4"></i>
           <p className="font-bold">Cargando inventario...</p>
         </div>
       ) : (
@@ -101,22 +102,25 @@ export default function TIEEEndaPage() {
           {productosFiltrados.map((prod) => (
             <div
               key={prod.id}
-              className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden hover:shadow-xl transition-all group flex flex-col"
+              className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-xl transition-all group flex flex-col hover:border-primario/30"
             >
-              <div className="aspect-square bg-slate-50 relative overflow-hidden">
+              <div className="aspect-square bg-slate-50 relative overflow-hidden flex-shrink-0">
                 <img
                   src={prod.imagen_url}
                   alt={prod.nombre}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
+                
+                {/* Etiquetas Condicionales */}
                 {prod.stock <= 5 && prod.stock > 0 && (
-                  <span className="absolute top-3 left-3 bg-amber-500 text-white text-[10px] font-black px-2 py-1 rounded-lg uppercase">
+                  <span className="absolute top-3 left-3 bg-amber-500 text-white text-[10px] font-black px-2 py-1 rounded-lg uppercase shadow-sm">
                     Últimas {prod.stock} piezas
                   </span>
                 )}
+                
                 {prod.stock === 0 && (
                   <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px] flex items-center justify-center">
-                    <span className="text-white font-black text-xs uppercase tracking-widest border-2 border-white px-3 py-1 rotate-[-15deg]">
+                    <span className="text-white font-black text-xs uppercase tracking-widest border-2 border-white px-3 py-1 rotate-[-15deg] shadow-lg">
                       Agotado
                     </span>
                   </div>
@@ -124,22 +128,23 @@ export default function TIEEEndaPage() {
               </div>
 
               <div className="p-4 flex-1 flex flex-col">
-                <p className="text-[10px] font-bold text-blue-600 uppercase mb-1">
+                <p className="text-[10px] font-bold text-primario uppercase mb-1 tracking-wider">
                   {prod.categoria}
                 </p>
-                <h3 className="font-bold text-slate-800 text-sm md:text-base leading-tight mb-2 flex-1">
+                <h3 className="font-bold text-slate-800 text-sm md:text-base leading-tight mb-4 flex-1">
                   {prod.nombre}
                 </h3>
 
                 <div className="flex items-end justify-between mt-auto">
                   <div>
-                    <p className="text-[10px] text-slate-400 font-medium">
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
                       Precio
                     </p>
-                    <p className="text-lg font-black text-slate-900">
+                    <p className="text-lg font-black text-slate-900 leading-none mt-1">
                       ${prod.precio}
                     </p>
                   </div>
+                  {/* CORRECCIÓN: Uso de icon-cart y mejora en la transición del hover */}
                   <button
                     disabled={prod.stock === 0}
                     onClick={() =>
@@ -153,26 +158,38 @@ export default function TIEEEndaPage() {
                         imagen_url: prod.imagen_url,
                       })
                     }
-                    className="w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center hover:bg-blue-600 disabled:bg-slate-200 disabled:text-slate-400 transition-all shadow-lg active:scale-95"
+                    className="cursor-pointer w-10 h-10 bg-slate-900 text-white rounded-xl flex items-center justify-center hover:opacity-90 disabled:bg-slate-100 disabled:text-slate-300 disabled:cursor-not-allowed transition-all shadow-md active:scale-95 flex-shrink-0"
+                    title={prod.stock === 0 ? "Agotado" : "Agregar al carrito"}
                   >
-                    <i className="icon-dove text-lg"></i>
+                    <i className="icon-plus-solid-full text-lg"></i>
                   </button>
                 </div>
               </div>
             </div>
           ))}
+          
+          {productosFiltrados.length === 0 && (
+            <div className="col-span-full py-16 text-center bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200">
+              <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-slate-100">
+                <i className="icon-magnifying-glass text-3xl text-slate-300"></i>
+              </div>
+              <h3 className="text-lg font-bold text-slate-700">Sin resultados</h3>
+              <p className="text-sm font-medium text-slate-500 mt-1">No encontramos componentes que coincidan con tu búsqueda.</p>
+            </div>
+          )}
         </div>
       )}
 
-      {/* FAB del Carrito (Solo si hay items, por ahora es estático) */}
+      {/* FAB del Carrito */}
+      {/* CORRECCIÓN: Uso de icon-cart en el FAB */}
       <Link
         href="/tieeenda/carrito"
-        className="fixed bottom-24 right-6 bg-blue-600 text-white w-16 h-16 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform active:scale-95 z-50"
+        className="fixed bottom-24 right-6 bg-gradient-to-t from-secundario to-primario text-white w-16 h-16 rounded-full shadow-xl shadow-sm/30 flex items-center justify-center hover:-translate-y-1 hover:shadow-2xl transition-all active:scale-95 z-50 cursor-pointer"
       >
-        <div className="relative">
-          <i className="icon-dove text-2xl"></i>
+        <div className="relative flex ">
+          <i className="icon-cart-shopping-solid-full text-2xl"></i>
           {totalItems > 0 && (
-            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-blue-600 animate-in zoom-in">
+            <span className="absolute -top-2 -right-3 bg-red-500 text-white text-[10px] font-bold w-[22px] h-[22px] rounded-full flex items-center justify-center border-[3px] border-white animate-in zoom-in shadow-sm">
               {totalItems}
             </span>
           )}

@@ -9,8 +9,8 @@ interface MapaSvgProps {
 export default function MapaSvg({
   edificioActivo,
   onEdificioClick,
-  colorBase = "#00a2c3", // Tu color cyan original por defecto
-  colorActivo = "#1e40af", // El azul oscuro de selección por defecto
+  colorBase = "#98002e", // Tu color cyan original por defecto
+  colorActivo = "#61116a", // El azul oscuro de selección por defecto
 }: MapaSvgProps) {
   // Creamos esta función "ayudante" para no repetir el condicional en cada edificio
   const getFillColor = (id: string) => {

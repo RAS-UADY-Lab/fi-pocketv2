@@ -11,7 +11,7 @@ export default function CarritoPage() {
   const [propina, setPropina] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [perfilCompleto, setPerfilCompleto] = useState<boolean | null>(null);
-  const [pedidoExitoso, setPedidoExitoso] = useState<string | null>(null); // <--- NUEVO ESTADO
+  const [pedidoExitoso, setPedidoExitoso] = useState<string | null>(null); 
   
   const supabase = createClient();
   const router = useRouter();
@@ -105,7 +105,7 @@ export default function CarritoPage() {
     return (
       <main className="min-h-[100dvh] w-full flex flex-col items-center justify-center p-6 bg-slate-50 animate-in fade-in zoom-in duration-500">
         <div className="w-24 h-24 bg-emerald-100 rounded-[2rem] flex items-center justify-center text-emerald-500 text-5xl mb-6 shadow-inner">
-          <i className="icon-check"></i>
+          <i className="icon-check-solid-full"></i>
         </div>
         <h2 className="text-3xl font-black text-slate-900 mb-2 tracking-tight text-center">¡Pedido Registrado!</h2>
         <p className="text-slate-500 text-center mb-6 font-medium max-w-sm">
@@ -114,10 +114,10 @@ export default function CarritoPage() {
         
         <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-8 w-full max-w-xs text-center shadow-sm">
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Número de Orden</p>
-          <p className="text-xl font-black text-blue-600">#{pedidoExitoso.slice(0, 5).toUpperCase()}</p>
+          <p className="text-xl font-black text-primario">#{pedidoExitoso.slice(0, 5).toUpperCase()}</p>
         </div>
 
-        <Link href="/perfil" className="w-full max-w-xs py-4 bg-slate-900 text-white text-center font-black rounded-2xl hover:bg-blue-600 transition-all shadow-lg shadow-slate-200 active:scale-95">
+        <Link href="/perfil" className="w-full max-w-xs py-4 bg-slate-900 text-white text-center font-black rounded-2xl hover:opacity-90 transition-all shadow-lg active:scale-95">
           Ver mis pedidos
         </Link>
       </main>
@@ -127,14 +127,15 @@ export default function CarritoPage() {
   if (cart.length === 0) {
     return (
       <main className="min-h-[100dvh] w-full flex flex-col items-center justify-center p-6 bg-slate-50">
-        <div className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-4xl mb-6 shadow-inner">
-          <i className="icon-cart"></i>
+        <div className="w-24 h-24 bg-primario/10 rounded-full flex items-center justify-center text-primario text-4xl mb-6 shadow-inner">
+          <i className="icon-cart-shopping-solid-full"></i>
         </div>
         <h2 className="text-2xl font-black text-slate-900 mb-2">Tu carrito está vacío</h2>
         <p className="text-slate-500 text-center mb-8 font-medium max-w-xs">
           Aún no has agregado ningún componente a tu pedido.
         </p>
-        <Link href="/tieeenda" className="px-6 py-3 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200">
+        {/* CORRECCIÓN: Hover opacity en botón con degradado */}
+        <Link href="/tieeenda" className="px-6 py-3 bg-gradient-to-t from-secundario to-primario text-white font-bold rounded-2xl hover:opacity-90 transition-all shadow-md active:scale-95 cursor-pointer">
           Explorar la TIEEEnda
         </Link>
       </main>
@@ -146,14 +147,14 @@ export default function CarritoPage() {
       
       {/* Cabecera */}
       <div className="flex items-center gap-4 mb-6 md:mb-8">
-        <Link href="/tieeenda" className="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-500 hover:text-blue-600 transition-colors shadow-sm cursor-pointer">
+        <Link href="/tieeenda" className="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-500 hover:text-primario transition-colors shadow-sm cursor-pointer active:scale-95">
           <i className="icon-left-arrow"></i>
         </Link>
         <h1 className="text-2xl font-black text-slate-900 tracking-tight">Tu Pedido</h1>
       </div>
 
       {/* Lista de Productos */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-4 md:p-6 shadow-sm mb-6 space-y-4">
+      <div className="bg-white border border-slate-200 rounded-[2rem] p-4 md:p-6 shadow-sm mb-6 space-y-4">
         {cart.map((item) => (
           <div key={item.id} className="flex gap-4 items-center pb-4 border-b border-slate-100 last:border-0 last:pb-0">
             <div className="w-16 h-16 bg-slate-50 rounded-2xl overflow-hidden flex-shrink-0 border border-slate-100">
@@ -162,24 +163,24 @@ export default function CarritoPage() {
             
             <div className="flex-1 min-w-0">
               <h3 className="font-bold text-slate-800 text-sm truncate">{item.nombre}</h3>
-              <p className="text-blue-600 font-black text-sm">${item.precio}</p>
+              <p className="text-primario font-black text-sm">${item.precio}</p>
             </div>
 
             {/* Controles de Cantidad */}
             <div className="flex items-center gap-3 bg-slate-50 rounded-xl p-1 border border-slate-200">
               <button 
                 onClick={() => item.cantidad > 1 ? updateQuantity(item.id, item.cantidad - 1) : removeFromCart(item.id)}
-                className="w-8 h-8 flex items-center justify-center text-slate-500 hover:bg-white hover:shadow-sm rounded-lg transition-all cursor-pointer"
+                className="w-8 h-8 flex items-center justify-center text-slate-500 hover:bg-white hover:shadow-sm rounded-lg transition-all cursor-pointer active:scale-95"
               >
-                <i className={item.cantidad === 1 ? "icon-trash text-red-500" : "icon-minus"}></i>
+                <i className={item.cantidad === 1 ? "icon-trash-solid-full text-red-500" : "icon-minus-solid-full"}></i>
               </button>
               <span className="font-bold text-sm w-4 text-center text-slate-900">{item.cantidad}</span>
               <button 
                 onClick={() => updateQuantity(item.id, item.cantidad + 1)}
                 disabled={item.cantidad >= item.stockMaximo}
-                className="w-8 h-8 flex items-center justify-center text-slate-500 hover:bg-white hover:shadow-sm rounded-lg transition-all disabled:opacity-30 cursor-pointer"
+                className="w-8 h-8 flex items-center justify-center text-slate-500 hover:bg-white hover:shadow-sm rounded-lg transition-all disabled:opacity-30 cursor-pointer active:scale-95"
               >
-                <i className="icon-plus"></i>
+                <i className="icon-plus-solid-full"></i>
               </button>
             </div>
           </div>
@@ -187,22 +188,24 @@ export default function CarritoPage() {
       </div>
 
       {/* Sección de Propina */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-5 shadow-sm mb-6">
+      <div className="bg-white border border-slate-200 rounded-[2rem] p-5 md:p-6 shadow-sm mb-6">
         <h3 className="font-bold text-slate-800 text-sm mb-1 flex items-center gap-2">
-          <i className="icon-dove text-blue-600"></i>
+          {/* Usamos el ícono del logo como corazón/aportación en lugar del icon-dove */}
+          <i className="icon-app-logo text-primario"></i>
           Aportación Voluntaria
         </h3>
         <p className="text-[11px] text-slate-500 font-medium mb-4 leading-relaxed">
-          Tu propina nos ayuda al mantenimiento de FI Pocket y a financiar futuros proyectos de la rama estudiantil.
+          Tu apoyo nos ayuda al mantenimiento de la plataforma y a financiar futuros proyectos de la comunidad estudiantil.
         </p>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {[0, 10, 20, 50].map((monto) => (
             <button
               key={monto}
               onClick={() => setPropina(monto)}
-              className={`cursor-pointer flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
+              /* CORRECCIÓN: Sombras limpias y degradado estándar Nodum */
+              className={`cursor-pointer flex-1 min-w-[70px] py-2.5 rounded-xl text-sm font-bold transition-all active:scale-95 ${
                 propina === monto 
-                  ? "bg-blue-600 text-white shadow-md shadow-blue-200" 
+                  ? "bg-gradient-to-t from-secundario to-primario text-white shadow-md" 
                   : "bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100"
               }`}
             >
@@ -213,14 +216,14 @@ export default function CarritoPage() {
       </div>
 
       {/* Resumen de Pago */}
-      <div className="bg-slate-900 rounded-3xl p-6 shadow-xl text-white mb-6">
+      <div className="bg-slate-900 rounded-[2rem] p-6 md:p-8 shadow-xl text-white mb-6">
         <div className="space-y-3 mb-4 text-sm font-medium border-b border-slate-800 pb-4">
           <div className="flex justify-between text-slate-400">
             <span>Subtotal ({cart.reduce((acc, item) => acc + item.cantidad, 0)} artículos)</span>
             <span>${totalPrice.toFixed(2)}</span>
           </div>
           <div className="flex justify-between text-slate-400">
-            <span>Aportación a la Rama</span>
+            <span>Aportación Voluntaria</span>
             <span>${propina.toFixed(2)}</span>
           </div>
         </div>
@@ -243,23 +246,25 @@ export default function CarritoPage() {
       {perfilCompleto === false && (
         <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between animate-in zoom-in-95 duration-300 shadow-sm">
           <div className="flex gap-3 items-start w-full">
-            <i className="icon-info text-red-500 text-xl mt-0.5"></i>
+            <i className="icon-circle-info-solid-full text-red-500 text-2xl mt-0.5"></i>
             <p className="text-xs text-red-800 font-semibold leading-relaxed">
               <strong className="block text-red-900 mb-0.5">Información Incompleta</strong>
               Para poder entregar tu pedido, necesitamos saber tu nombre completo, WhatsApp de contacto y carrera.
             </p>
           </div>
-          <Link href="/perfil" className="w-full md:w-auto text-center whitespace-nowrap bg-red-600 text-white px-5 py-3 rounded-xl text-xs font-bold hover:bg-red-700 transition-all shadow-md shadow-red-200 active:scale-95 cursor-pointer">
+          {/* CORRECCIÓN: Sombras limpias */}
+          <Link href="/perfil" className="w-full md:w-auto text-center whitespace-nowrap bg-red-600 text-white px-5 py-3 rounded-xl text-xs font-bold hover:bg-red-700 transition-all shadow-md active:scale-95 cursor-pointer">
             Completar Perfil
           </Link>
         </div>
       )}
 
       {/* Botón de Checkout */}
+      {/* CORRECCIÓN: Botón principal con hover de opacidad y sombra estándar */}
       <button 
         onClick={procesarPedido}
         disabled={loading || perfilCompleto === false || perfilCompleto === null}
-        className="cursor-pointer w-full py-4 bg-blue-600 text-white font-black rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 active:scale-[0.98]"
+        className="cursor-pointer w-full py-4 bg-gradient-to-t from-secundario to-primario text-white font-black rounded-2xl hover:opacity-90 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 active:scale-[0.98]"
       >
         {loading || perfilCompleto === null ? (
           <span className="animate-pulse">Procesando...</span>
