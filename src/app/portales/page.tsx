@@ -1,11 +1,31 @@
 "use client";
 
 import { useTenant } from "@/context/TenantContext";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 
 export default function PortalesPage() {
   const { portales, loadingConfig } = useTenant();
+  const supabase = createClient();
+  const router = useRouter();
+  const [loadingAuth, setLoadingAuth] = useState(true);
 
-  if (loadingConfig) {
+  // NUEVO: Candado de seguridad para invitados
+  useEffect(() => {
+    const verificarAcceso = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        router.push("/login");
+        return;
+      }
+      setLoadingAuth(false);
+    };
+    verificarAcceso();
+  }, [supabase, router]);
+
+  if (loadingConfig || loadingAuth) {
     return <div className="p-8 text-center animate-pulse text-slate-400 font-bold">Cargando portales...</div>;
   }
 
@@ -37,7 +57,6 @@ export default function PortalesPage() {
                 </a>
               </div>
               
-              {/* Contenedor del ícono decorativo responsivo */}
               <div className="absolute -bottom-4 -right-2 md:static md:w-32 md:h-32 md:flex md:items-center md:justify-center md:bg-white/10 md:rounded-full md:shadow-inner md:flex-shrink-0">
                 <i className={`${portal.icono || 'icon-laptop'} text-8xl opacity-20 transform -rotate-12 md:rotate-0 md:opacity-100 md:text-6xl md:text-white transition-transform duration-500 group-hover:scale-110`}></i>
               </div>

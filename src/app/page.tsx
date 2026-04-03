@@ -182,6 +182,7 @@ export default function HomePage() {
       </header>
 
       {/* Accesos Rápidos */}
+      {usuario && (
       <section className="mb-10 flex-shrink-0">
         <h2 className="text-lg font-bold text-slate-800 mb-4 px-1">Accesos Rápidos</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -211,12 +212,13 @@ export default function HomePage() {
           )}
           {modulos.tienda && (
             <Link href="/tieeenda" className="flex flex-col items-center justify-center bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-primario/30 hover:shadow-md transition-all group cursor-pointer active:scale-95 md:hidden">
-              <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center text-red-500 mb-3 group-hover:scale-110 transition-transform"><i className="icon-cart text-2xl"></i></div>
+              <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center text-red-500 mb-3 group-hover:scale-110 transition-transform"><i className="icon-store-solid-full text-2xl"></i></div>
               <span className="font-bold text-slate-700 text-sm">TIEEEnda</span>
             </Link>
           )}
         </div>
       </section>
+      )}
 
       {/* Carrusel de Comunidades Interactivo */}
       <section className="mb-10 flex-shrink-0">

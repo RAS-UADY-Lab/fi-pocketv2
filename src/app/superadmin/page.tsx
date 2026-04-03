@@ -3,11 +3,13 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import { useTenant } from "@/context/TenantContext";
 
 export default function SuperAdminPage() {
   const supabase = createClient();
   const router = useRouter();
 
+  const { recargarConfiguracion } = useTenant();
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [tenants, setTenants] = useState<any[]>([]);
@@ -163,7 +165,13 @@ export default function SuperAdminPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
+      // 1. Cambiamos tu perfil en la base de datos
       await supabase.from("perfiles").update({ tenant_id: tenantActivo.id }).eq("id", session.user.id);
+      
+      // 2. ✨ LA MAGIA: Le avisamos a toda la app que cargue los nuevos datos
+      await recargarConfiguracion();
+      
+      // 3. Viajamos al panel de admin
       router.push("/admin");
     } catch (error) {
       mostrarToast("Error al intentar redirigir.", "error");

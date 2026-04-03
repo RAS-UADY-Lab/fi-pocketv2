@@ -3,10 +3,30 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useTenant } from '@/context/TenantContext';
+import { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase';
 
 export default function BottomNav() {
   const { modulos, loadingConfig } = useTenant();
   const pathname = usePathname();
+  const supabase = createClient();
+
+  // NUEVO: Estado para saber si es invitado o usuario
+  const [usuario, setUsuario] = useState<any>(null);
+
+  useEffect(() => {
+    const verificarSesion = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUsuario(session?.user || null);
+    };
+    verificarSesion();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUsuario(session?.user || null);
+    });
+
+    return () => authListener.subscription.unsubscribe();
+  }, [supabase]);
 
   if (loadingConfig) {
     return <nav className="w-full h-16 border-t border-slate-200 bg-slate-50 animate-pulse pb-safe flex-shrink-0"></nav>;
@@ -62,7 +82,8 @@ export default function BottomNav() {
           </li>
         )}
 
-        {modulos.archivo && (
+        {/* RESTRICCIÓN: Solo si el módulo está activo Y hay usuario logueado */}
+        {modulos.archivo && usuario && (
           <li className="flex-1">
             <Link 
               href="/archivo" 
@@ -76,7 +97,7 @@ export default function BottomNav() {
           </li>
         )}
 
-        {modulos.portales && (
+        {modulos.portales && usuario && (
           <li className="flex-1">
             <Link 
               href="/portales" 
@@ -90,7 +111,7 @@ export default function BottomNav() {
           </li>
         )}
 
-        {modulos.tienda && (
+        {modulos.tienda && usuario && (
           <li className="flex-1">
             <Link 
               href="/tieeenda" 
@@ -104,7 +125,7 @@ export default function BottomNav() {
           </li>
         )}
 
-        {modulos.perfil && (
+        {modulos.perfil && usuario && (
           <li className="flex-1">
             <Link 
               href="/perfil" 

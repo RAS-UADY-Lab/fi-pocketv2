@@ -15,11 +15,42 @@ export default function ConfiguracionTab() {
     colores: colores
   });
 
+  // NUEVO: Sistema de Notificaciones (Toasts)
+  const [toast, setToast] = useState<{ mensaje: string; tipo: 'success' | 'error' } | null>(null);
+
+  const mostrarToast = (mensaje: string, tipo: 'success' | 'error') => {
+    setToast({ mensaje, tipo });
+    setTimeout(() => setToast(null), 4000); // Desaparece después de 4 segundos
+  };
+
+  // Estados para el Código de Invitación
+  const [codigoAcceso, setCodigoAcceso] = useState("");
+  const [codigoActivo, setCodigoActivo] = useState(false);
+  const [cargandoCodigo, setCargandoCodigo] = useState(true);
+
   useEffect(() => {
     setConfigEditando({ identidad, modulos, colores });
   }, [identidad, modulos, colores]);
 
-  // Funciones para manejar el arreglo de carreras
+  // Cargar el código de acceso directamente de la tabla tenants
+  useEffect(() => {
+    const fetchCodigo = async () => {
+      if (!tenantId) return;
+      const { data, error } = await supabase
+        .from("tenants")
+        .select("codigo_acceso, codigo_activo")
+        .eq("id", tenantId)
+        .single();
+
+      if (data && !error) {
+        setCodigoAcceso(data.codigo_acceso || "");
+        setCodigoActivo(data.codigo_activo || false);
+      }
+      setCargandoCodigo(false);
+    };
+    fetchCodigo();
+  }, [tenantId, supabase]);
+
   const agregarCarrera = () => {
     const nuevasCarreras = [...(configEditando.identidad.carreras || []), ""];
     setConfigEditando({
@@ -46,8 +77,16 @@ export default function ConfiguracionTab() {
     });
   };
 
+  const generarCodigoAleatorio = () => {
+    const caracteres = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let nuevoCodigo = "";
+    for (let i = 0; i < 8; i++) {
+      nuevoCodigo += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+    }
+    setCodigoAcceso(nuevoCodigo);
+  };
+
   const guardarConfiguracionTenant = async () => {
-    // Filtramos las carreras vacías antes de guardar
     const carrerasLimpias = (configEditando.identidad.carreras || []).filter(c => c.trim() !== "");
     const configListaParaGuardar = {
       ...configEditando,
@@ -61,26 +100,39 @@ export default function ConfiguracionTab() {
         .update({
           identidad: configListaParaGuardar.identidad,
           modulos: configListaParaGuardar.modulos,
-          colores: configListaParaGuardar.colores
+          colores: configListaParaGuardar.colores,
+          codigo_acceso: codigoAcceso.trim().toUpperCase(), 
+          codigo_activo: codigoActivo
         })
         .eq("id", tenantId);
         
       if (error) throw error;
       await recargarConfiguracion(); 
-      alert("¡Configuración de la instancia actualizada!");
-    } catch (error) {
-      alert("Error al actualizar la configuración.");
+      mostrarToast("¡Configuración de la instancia actualizada!", "success");
+    } catch (error: any) {
+      console.error("Error al actualizar tenant:", error);
+      mostrarToast(error.message || "Error al actualizar la configuración.", "error");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+
+      {/* COMPONENTE TOAST FLOTANTE */}
+      {toast && (
+        <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-3.5 rounded-2xl shadow-2xl z-[200] animate-in slide-in-from-bottom-5 fade-in duration-300 font-bold text-sm flex items-center gap-3 whitespace-nowrap ${
+          toast.tipo === 'success' ? 'bg-slate-900 text-white' : 'bg-red-500 text-white'
+        }`}>
+          <i className={toast.tipo === 'success' ? 'icon-check-solid-full' : 'icon-close text-lg'}></i>
+          {toast.mensaje}
+        </div>
+      )}
       
       <div className="bg-white border border-slate-200 rounded-[2.5rem] p-6 md:p-8 shadow-sm">
         <h2 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-2">
-          <i className="icon-info text-primario"></i> Identidad de la Instancia
+          <i className="icon-circle-info-solid-full text-primario"></i> Identidad de la Instancia
         </h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -106,7 +158,7 @@ export default function ConfiguracionTab() {
           </div>
         </div>
 
-        {/* NUEVA SECCIÓN: Oferta Académica */}
+        {/* Oferta Académica */}
         <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mt-8 mb-3 border-t border-slate-100 pt-6">Oferta Académica (Carreras)</h3>
         <div className="space-y-3">
           {(configEditando.identidad.carreras || []).map((carrera, index) => (
@@ -133,6 +185,7 @@ export default function ConfiguracionTab() {
           </button>
         </div>
 
+        {/* Paleta de Colores */}
         <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mt-8 mb-3 border-t border-slate-100 pt-6">Paleta de Colores de la Instancia</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-1.5">
@@ -152,6 +205,57 @@ export default function ConfiguracionTab() {
         </div>
       </div>
 
+      {/* NUEVA SECCIÓN: Seguridad y Registro */}
+      {!cargandoCodigo && (
+        <div className="bg-white border border-slate-200 rounded-[2.5rem] p-6 md:p-8 shadow-sm">
+          <h2 className="text-xl font-black text-slate-900 mb-2 flex items-center gap-2">
+            <i className="icon-lock-solid-full text-primario"></i> Seguridad y Registro
+          </h2>
+          <p className="text-sm text-slate-500 font-medium mb-6">Gestiona cómo acceden los usuarios sin correo institucional oficial a tu sede.</p>
+          
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between p-5 bg-slate-50 border border-slate-100 rounded-2xl gap-4">
+            <div className="flex-1">
+              <h3 className="font-bold text-slate-800 text-sm">Habilitar Código de Invitación</h3>
+              <p className="text-[11px] text-slate-500 leading-relaxed mt-1">
+                Permite que estudiantes externos o de nuevo ingreso (sin correo <strong>@tu-universidad</strong>) se registren usando un código secreto.
+              </p>
+            </div>
+            <button 
+              onClick={() => setCodigoActivo(!codigoActivo)}
+              className={`cursor-pointer w-14 h-7 rounded-full relative transition-colors duration-300 focus:outline-none flex-shrink-0 ${codigoActivo ? "bg-emerald-500 shadow-inner shadow-emerald-700/20" : "bg-slate-300 shadow-inner shadow-slate-400/20"}`}
+            >
+              <span className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all duration-300 shadow-sm ${codigoActivo ? "left-8" : "left-1"}`} />
+            </button>
+          </div>
+
+          {codigoActivo && (
+            <div className="mt-5 animate-in slide-in-from-top-2 fade-in duration-300 space-y-2">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Código Actual</label>
+              <div className="flex gap-2">
+                <input 
+                  type="text"
+                  className="flex-1 p-4 bg-white border border-slate-200 rounded-2xl text-base font-black tracking-widest text-slate-800 outline-none focus:ring-2 focus:ring-primario/20 transition-all uppercase"
+                  value={codigoAcceso}
+                  onChange={(e) => setCodigoAcceso(e.target.value.toUpperCase())}
+                  placeholder="Ej. OTOÑO2026"
+                />
+                <button 
+                  onClick={generarCodigoAleatorio}
+                  title="Generar código seguro"
+                  className="w-14 bg-slate-100 text-slate-500 rounded-2xl flex items-center justify-center hover:bg-slate-200 transition-colors cursor-pointer active:scale-95 border border-slate-200"
+                >
+                  <i className="icon-id font-bold"></i>
+                </button>
+              </div>
+              <p className="text-[10px] text-amber-600 font-bold ml-1 flex items-center gap-1">
+                <i className="icon-circle-info-solid-full"></i> Comparte este código únicamente por canales oficiales.
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Módulos Habilitados */}
       <div className="bg-white border border-slate-200 rounded-[2.5rem] p-6 md:p-8 shadow-sm">
         <h2 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-2">
           <i className="icon-laptop text-secundario"></i> Módulos Habilitados para el Campus

@@ -1,11 +1,31 @@
 "use client";
 
 import { useTenant } from "@/context/TenantContext";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 
 export default function ArchivoPage() {
   const { documentos, loadingConfig } = useTenant();
+  const supabase = createClient();
+  const router = useRouter();
+  const [loadingAuth, setLoadingAuth] = useState(true);
 
-  if (loadingConfig) {
+  // NUEVO: Candado de seguridad para invitados
+  useEffect(() => {
+    const verificarAcceso = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        router.push("/login");
+        return;
+      }
+      setLoadingAuth(false);
+    };
+    verificarAcceso();
+  }, [supabase, router]);
+
+  if (loadingConfig || loadingAuth) {
     return <div className="p-8 text-center animate-pulse text-slate-400 font-bold">Cargando archivo...</div>;
   }
 
@@ -26,17 +46,14 @@ export default function ArchivoPage() {
                 href={doc.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                /* CORRECCIÓN: Mejora en las transiciones y efecto de escala al dar clic */
                 className="group flex items-center justify-between p-4 md:p-5 bg-white border border-slate-200 rounded-2xl hover:border-primario/50 hover:shadow-md transition-all cursor-pointer active:scale-[0.98]"
               >
                 <div className="flex items-center gap-4">
                   <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 transition-colors ${
                     doc.tipo === "PDF" ? "bg-red-50 text-red-500 group-hover:bg-red-100" : 
-                    /* CORRECCIÓN: El color de WORD ahora usa azules estáticos para no perder su identidad visual */
                     doc.tipo === "WORD" ? "bg-blue-50 text-blue-600 group-hover:bg-blue-100" :
                     "bg-emerald-50 text-emerald-500 group-hover:bg-emerald-100"
                   }`}>
-                    {/* El ícono se renderiza según el tipo */}
                     <i className={doc.tipo === "PDF" ? "icon-file-pdf" : doc.tipo === "WORD" ? "icon-file-word" : "icon-file"}></i>
                   </div>
                   
@@ -58,7 +75,6 @@ export default function ArchivoPage() {
                   </div>
                 </div>
 
-                {/* CORRECCIÓN: Botón de descarga con el gradiente Nodum al hacer hover */}
                 <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-gradient-to-t group-hover:from-secundario group-hover:to-primario group-hover:text-white transition-all shadow-sm group-hover:shadow-md flex-shrink-0 ml-4">
                   <i className="icon-download text-lg"></i>
                 </div>
