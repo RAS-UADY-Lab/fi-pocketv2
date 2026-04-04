@@ -15,8 +15,13 @@ import CampusTab from "./tabs/CampusTab";
 import DirectorioTab from "./tabs/DirectorioTab";
 import ComunidadesTab from "./tabs/ComunidadesTab";
 import AvisosTab from "./tabs/AvisosTab";
+// ✨ NUEVAS PESTAÑAS IMPORTADAS
+import ModulosTab from "./tabs/ModulosTab";
+import AccesosRapidosTab from "./tabs/AccesosRapidosTab";
+import MantenimientoTab from "./tabs/MantenimientoTab";
 
-type TabType = "pendientes" | "directorio" | "pedidos" | "inventario" | "campus" | "archivo" | "portales" | "comunidades" | "avisos" | "configuracion";
+// ✨ TIPOS ACTUALIZADOS
+type TabType = "avisos" | "pendientes" | "pedidos" | "inventario" | "directorio" | "comunidades" | "accesos" | "campus" | "archivo" | "portales" | "modulos" | "configuracion" | "mantenimiento";
 
 export default function AdminPage() {
   const supabase = createClient();
@@ -25,9 +30,11 @@ export default function AdminPage() {
   const { modulos, tenantId, recargarConfiguracion } = useTenant();
 
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false); // <-- Estado para el selector master
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [loadingAuth, setLoadingAuth] = useState(true);
-  const [tabActiva, setTabActiva] = useState<TabType>("configuracion");
+  
+  // ✨ PESTAÑA POR DEFECTO MÁS RELEVANTE
+  const [tabActiva, setTabActiva] = useState<TabType>("avisos");
 
   // Estados para el selector de SuperAdmin
   const [listaTenants, setListaTenants] = useState<any[]>([]);
@@ -63,7 +70,6 @@ export default function AdminPage() {
     verificarAcceso();
   }, [supabase, router]);
 
-  // Función exclusiva para el SuperAdmin: Cambiar de instancia "en caliente"
   const handleCambiarTenant = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const nuevoTenantId = parseInt(e.target.value);
     setCambiandoTenant(true);
@@ -72,14 +78,9 @@ export default function AdminPage() {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) return;
 
-      // 1. Actualizamos el perfil del superadmin para que ahora apunte al nuevo tenant
       await supabase.from("perfiles").update({ tenant_id: nuevoTenantId }).eq("id", session.user.id);
-      
-      // 2. Le decimos al contexto que vuelva a cargar todo con el nuevo ID
       await recargarConfiguracion();
-      
-      // 3. Opcional: Reiniciar la pestaña a Configuración por seguridad
-      setTabActiva("configuracion");
+      setTabActiva("avisos"); // ✨ Reiniciamos a la pestaña más común al cambiar de escuela
 
     } catch (error) {
       console.error("Error al cambiar de instancia:", error);
@@ -100,13 +101,12 @@ export default function AdminPage() {
   return (
     <main className="min-h-[100dvh] w-full max-w-6xl mx-auto p-4 md:p-8 overflow-y-auto no-scrollbar pb-32">
       
-      <header className="mb-8">
+      <header className="mb-8 print:hidden">
         <div className="flex items-center gap-3 mb-2">
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">Panel Administrativo</h1>
         </div>
         <p className="text-slate-500 text-sm font-medium">Centro de control de Nodum.</p>
 
-        {/* SELECTOR DE INSTANCIA (Exclusivo para SuperAdmin) */}
         {isSuperAdmin && (
           <div className="mt-6 flex items-center gap-4 bg-slate-900 p-4 rounded-2xl shadow-lg border border-slate-800 animate-in fade-in slide-in-from-top-4">
             <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-emerald-400 flex-shrink-0 border border-slate-700">
@@ -136,8 +136,16 @@ export default function AdminPage() {
         )}
       </header>
 
-      {/* Menú de Navegación Deslizable Dinámico */}
-      <nav className={`flex gap-2 mb-8 bg-slate-100 p-1.5 rounded-2xl w-full overflow-x-auto custom-scrollbar transition-opacity duration-300 ${cambiandoTenant ? "opacity-50 pointer-events-none" : "opacity-100"}`}>
+      {/* ✨ MENÚ ORDENADO POR RELEVANCIA */}
+      <nav className={`print:hidden flex gap-2 mb-8 bg-slate-100 p-1.5 rounded-2xl w-full overflow-x-auto custom-scrollbar transition-opacity duration-300 ${cambiandoTenant ? "opacity-50 pointer-events-none" : "opacity-100"}`}>
+        
+        {/* BLOQUE 1: Operación Diaria */}
+        <button onClick={() => setTabActiva("avisos")} className={tabClasses("avisos")}>Avisos</button>
+        
+        {modulos.mantenimiento && (
+          <button onClick={() => setTabActiva("mantenimiento")} className={tabClasses("mantenimiento")}>Reportes Físicos</button>
+        )}
+
         {modulos.ieee && (
           <button onClick={() => setTabActiva("pendientes")} className={tabClasses("pendientes")}>Solicitudes</button>
         )}
@@ -149,42 +157,47 @@ export default function AdminPage() {
           </>
         )}
         
-        {modulos.mapa && (
-          <button onClick={() => setTabActiva("campus")} className={tabClasses("campus")}>Campus</button>
-        )}
-        
+        {/* BLOQUE 2: Gestión de Contenido */}
         {modulos.directorio && (
           <button onClick={() => setTabActiva("directorio")} className={tabClasses("directorio")}>Miembros</button>
         )}
-
         <button onClick={() => setTabActiva("comunidades")} className={tabClasses("comunidades")}>Comunidades</button>
-        <button onClick={() => setTabActiva("avisos")} className={tabClasses("avisos")}>Avisos</button>
-
+        <button onClick={() => setTabActiva("accesos")} className={tabClasses("accesos")}>Accesos Rápidos</button>
+        
+        {/* BLOQUE 3: Infraestructura */}
+        {modulos.mapa && (
+          <button onClick={() => setTabActiva("campus")} className={tabClasses("campus")}>Campus</button>
+        )}
         {modulos.archivo && (
           <button onClick={() => setTabActiva("archivo")} className={tabClasses("archivo")}>Archivo</button>
         )}
-        
         {modulos.portales && (
           <button onClick={() => setTabActiva("portales")} className={tabClasses("portales")}>Portales</button>
         )}
 
-        <button onClick={() => setTabActiva("configuracion")} className={tabClasses("configuracion")}>
-          Configuración
-        </button>
+        {/* BLOQUE 4: Configuraciones Core */}
+        <button onClick={() => setTabActiva("modulos")} className={tabClasses("modulos")}>Módulos</button>
+        <button onClick={() => setTabActiva("configuracion")} className={tabClasses("configuracion")}>Configuración</button>
       </nav>
 
       {/* Renderizado Dinámico de Pestañas */}
       <div className={`animate-in fade-in slide-in-from-bottom-4 duration-500 transition-opacity ${cambiandoTenant ? "opacity-30 pointer-events-none" : "opacity-100"}`}>
-        {tabActiva === "configuracion" && <ConfiguracionTab />}
-        {tabActiva === "archivo" && <ArchivoTab />}
-        {tabActiva === "portales" && <PortalesTab />}
-        {tabActiva === "comunidades" && <ComunidadesTab />}
+        {tabActiva === "mantenimiento" && <MantenimientoTab />}
         {tabActiva === "avisos" && <AvisosTab />}
         {tabActiva === "pendientes" && <PendientesTab />}
         {tabActiva === "pedidos" && <PedidosTab />}
         {tabActiva === "inventario" && <InventarioTab />}
-        {tabActiva === "campus" && <CampusTab />}
+        
         {tabActiva === "directorio" && <DirectorioTab />}
+        {tabActiva === "comunidades" && <ComunidadesTab />}
+        {tabActiva === "accesos" && <AccesosRapidosTab />}
+        
+        {tabActiva === "campus" && <CampusTab />}
+        {tabActiva === "archivo" && <ArchivoTab />}
+        {tabActiva === "portales" && <PortalesTab />}
+        
+        {tabActiva === "modulos" && <ModulosTab />}
+        {tabActiva === "configuracion" && <ConfiguracionTab />}
       </div>
 
     </main>

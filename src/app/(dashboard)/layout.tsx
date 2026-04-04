@@ -6,6 +6,7 @@ import BottomNav from "@/components/BottomNav";
 import SideNav from "@/components/SideNav";
 import { CartProvider } from "@/context/CartContext";
 import { TenantProvider } from "@/context/TenantContext";
+import PullToRefresh from "@/components/PullToRefresh";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -49,8 +50,10 @@ export default function DashboardLayout({
               <SideNav />
 
               {/* 3. El contenido principal */}
-              <main className="flex-1 overflow-y-auto relative bg-slate-50">
-                {children}
+              <main className="flex-1 overflow-hidden relative bg-slate-50">
+                <PullToRefresh>
+                  {children}
+                </PullToRefresh>
               </main>
 
               {/* 4. Navegación móvil */}

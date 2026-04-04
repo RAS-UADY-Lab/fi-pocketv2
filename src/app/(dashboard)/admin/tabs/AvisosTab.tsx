@@ -17,21 +17,61 @@ export default function AvisosTab() {
   const [avisoEditando, setAvisoEditando] = useState<any>(null);
   const [avisoAEliminar, setAvisoAEliminar] = useState<string | null>(null);
 
+  // ✨ NUEVOS ESTADOS PARA FECHAS
+  const [expiracionTipo, setExpiracionTipo] = useState<"1d" | "1w" | "1m" | "custom" | "never">("1w");
+  const [fechaCustom, setFechaCustom] = useState("");
+
   const abrirModal = (aviso?: any) => {
     if (aviso) {
       setAvisoEditando(aviso);
+      setExpiracionTipo(aviso.mantener_activo ? "never" : "1w"); // Fallback visual simple para edición
     } else {
-      const fechaActual = new Date().toLocaleDateString('es-MX', { day: 'numeric', month: 'short' });
-      setAvisoEditando({ id: "aviso_" + Date.now(), titulo: "", tiempo: fechaActual, descripcion: "", icono: "icon-calendar" });
+      setAvisoEditando({ 
+        id: "aviso_" + Date.now(), 
+        titulo: "", 
+        descripcion: "", 
+        icono: "icon-calendar",
+        mantener_activo: false,
+        fecha_creacion: new Date().toISOString(),
+        fecha_expiracion: null
+      });
+      setExpiracionTipo("1w");
     }
   };
 
   const guardarAviso = async () => {
     setLoading(true);
+    
+    // ✨ LÓGICA DE CÁLCULO DE EXPIRACIÓN ANTES DE GUARDAR
+    let exp = null;
+    const mantenerActivo = avisoEditando.mantener_activo || expiracionTipo === "never";
+
+    if (!mantenerActivo) {
+      const fecha = new Date();
+      if (expiracionTipo === "1d") fecha.setDate(fecha.getDate() + 1);
+      if (expiracionTipo === "1w") fecha.setDate(fecha.getDate() + 7);
+      if (expiracionTipo === "1m") fecha.setMonth(fecha.getMonth() + 1);
+      
+      if (expiracionTipo === "custom" && fechaCustom) {
+        exp = new Date(fechaCustom).toISOString();
+      } else if (expiracionTipo !== "custom") {
+        exp = fecha.toISOString();
+      } else {
+        exp = avisoEditando.fecha_expiracion; // Fallback si olvidaron poner fecha custom
+      }
+    }
+
+    const avisoFinal = {
+      ...avisoEditando,
+      mantener_activo: mantenerActivo,
+      fecha_expiracion: exp,
+      fecha_creacion: avisoEditando.fecha_creacion || new Date().toISOString()
+    };
+
     let nuevos = [...avisos];
-    const index = nuevos.findIndex(a => a.id === avisoEditando.id);
-    if (index >= 0) nuevos[index] = avisoEditando;
-    else nuevos.unshift(avisoEditando);
+    const index = nuevos.findIndex(a => a.id === avisoFinal.id);
+    if (index >= 0) nuevos[index] = avisoFinal;
+    else nuevos.unshift(avisoFinal);
 
     const { error } = await supabase.from("tenants").update({ avisos: nuevos }).eq("id", tenantId);
     if (!error) {
@@ -60,7 +100,6 @@ export default function AvisosTab() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-black text-slate-900">Avisos de Inicio</h2>
-        {/* CORRECCIÓN: Hover con opacity y scale */}
         <button onClick={() => abrirModal()} className="bg-gradient-to-t from-secundario to-primario text-white px-5 py-2.5 rounded-xl font-black text-xs uppercase hover:opacity-90 active:scale-95 transition-all shadow-md cursor-pointer">
           + Publicar Aviso
         </button>
@@ -70,7 +109,6 @@ export default function AvisosTab() {
         {avisos.length > 0 ? avisos.map((aviso) => (
           <div key={aviso.id} className="bg-white border border-slate-200 hover:border-primario/40 rounded-2xl p-5 shadow-sm flex items-start gap-4 relative pr-16 group transition-all">
             <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-              {/* CORRECCIÓN: Botón secundario usa colores dinámicos con opacidad en lugar de fondos sólidos */}
               <button onClick={() => abrirModal(aviso)} className="w-8 h-8 rounded-full bg-primario/10 text-primario flex items-center justify-center hover:bg-primario/20 cursor-pointer transition-colors">
                 <i className="icon-left-arrow rotate-180 text-xs"></i>
               </button>
@@ -87,7 +125,21 @@ export default function AvisosTab() {
                 <h3 className="font-bold text-slate-800">{aviso.titulo}</h3>
               </div>
               <p className="text-sm text-slate-600 leading-relaxed mb-2 pr-6">{aviso.descripcion}</p>
-              <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded-md">{aviso.tiempo}</span>
+              
+              {/* ✨ ETIQUETAS INFORMATIVAS DE EXPIRACIÓN PARA EL ADMIN */}
+              <div className="flex gap-2">
+                <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded-md">
+                  Creado: {new Date(aviso.fecha_creacion || Date.now()).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}
+                </span>
+                {aviso.mantener_activo ? (
+                  <span className="text-[10px] font-bold bg-emerald-50 text-emerald-600 px-2 py-1 rounded-md border border-emerald-100">Permanente</span>
+                ) : aviso.fecha_expiracion ? (
+                  <span className={`text-[10px] font-bold px-2 py-1 rounded-md border ${new Date(aviso.fecha_expiracion) < new Date() ? 'bg-red-50 text-red-600 border-red-100' : 'bg-amber-50 text-amber-600 border-amber-100'}`}>
+                    Expira: {new Date(aviso.fecha_expiracion).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}
+                  </span>
+                ) : null}
+              </div>
+
             </div>
           </div>
         )) : (
@@ -101,12 +153,11 @@ export default function AvisosTab() {
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl relative my-8 animate-in zoom-in-95 duration-200">
             <button onClick={() => setAvisoEditando(null)} className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200 transition-colors cursor-pointer"><i className="icon-close font-bold">x</i></button>
-            <h3 className="font-black text-xl mb-4">Configurar Aviso</h3>
+            <h3 className="font-black text-xl mb-4">{avisoEditando.fecha_expiracion ? 'Editar Aviso' : 'Nuevo Aviso'}</h3>
             
             <div className="space-y-4">
               <div>
                 <label className="text-[10px] font-bold text-slate-400">Título del Aviso</label>
-                {/* CORRECCIÓN: Anillos de enfoque dinámicos */}
                 <input placeholder="Ej. Inicio de Semestre" className="w-full p-3 bg-slate-50 rounded-xl outline-none border border-slate-200 font-bold text-slate-800 focus:ring-2 focus:ring-primario/20 transition-all" value={avisoEditando.titulo} onChange={e => setAvisoEditando({...avisoEditando, titulo: e.target.value})} />
               </div>
 
@@ -129,13 +180,48 @@ export default function AvisosTab() {
 
               <div>
                 <label className="text-[10px] font-bold text-slate-400">Cuerpo del mensaje</label>
-                {/* CORRECCIÓN: Anillos de enfoque dinámicos */}
-                <textarea placeholder="Escribe el mensaje..." className="w-full p-3 bg-slate-50 rounded-xl outline-none border border-slate-200 text-sm resize-none focus:ring-2 focus:ring-primario/20 transition-all" rows={4} value={avisoEditando.descripcion} onChange={e => setAvisoEditando({...avisoEditando, descripcion: e.target.value})} />
+                <textarea placeholder="Escribe el mensaje..." className="w-full p-3 bg-slate-50 rounded-xl outline-none border border-slate-200 text-sm resize-none focus:ring-2 focus:ring-primario/20 transition-all" rows={3} value={avisoEditando.descripcion} onChange={e => setAvisoEditando({...avisoEditando, descripcion: e.target.value})} />
               </div>
+
+              {/* ✨ SELECTOR DE TIEMPO INTEGRADO */}
+              <div>
+                <label className="text-[10px] font-bold text-slate-400 mb-2 block">Tiempo de Visibilidad</label>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { id: '1d', label: '24 hrs' },
+                    { id: '1w', label: '1 sem' },
+                    { id: '1m', label: '1 mes' },
+                    { id: 'custom', label: 'Elegir' },
+                    { id: 'never', label: 'Fijo' },
+                  ].map(tipo => (
+                    <button
+                      key={tipo.id}
+                      onClick={() => setExpiracionTipo(tipo.id as any)}
+                      className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all cursor-pointer border ${
+                        expiracionTipo === tipo.id 
+                          ? 'bg-slate-900 border-slate-900 text-white shadow-sm' 
+                          : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+                      }`}
+                    >
+                      {tipo.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {expiracionTipo === "custom" && (
+                <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                  <input 
+                    type="datetime-local"
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-primario/20 transition-all"
+                    onChange={e => setFechaCustom(e.target.value)}
+                  />
+                </div>
+              )}
+
             </div>
             
-            {/* CORRECCIÓN: Hover con opacity y scale */}
-            <button onClick={guardarAviso} disabled={loading || !avisoEditando.titulo} className="w-full mt-6 py-4 bg-gradient-to-t from-secundario to-primario text-white font-black rounded-xl hover:opacity-90 active:scale-[0.98] transition-all shadow-md disabled:opacity-50 cursor-pointer">
+            <button onClick={guardarAviso} disabled={loading || !avisoEditando.titulo || !avisoEditando.descripcion} className="w-full mt-6 py-4 bg-gradient-to-t from-secundario to-primario text-white font-black rounded-xl hover:opacity-90 active:scale-[0.98] transition-all shadow-md disabled:opacity-50 cursor-pointer">
               {loading ? "Publicando..." : "Publicar Aviso"}
             </button>
           </div>

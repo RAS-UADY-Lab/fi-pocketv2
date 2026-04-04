@@ -5,34 +5,30 @@ import { createClient } from "@/lib/supabase";
 import { useTenant } from "@/context/TenantContext";
 
 export default function ConfiguracionTab() {
-  const { identidad, modulos, colores, recargarConfiguracion, tenantId } = useTenant();
+  const { identidad, colores, recargarConfiguracion, tenantId } = useTenant();
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
 
   const [configEditando, setConfigEditando] = useState({
     identidad: identidad,
-    modulos: modulos,
     colores: colores
   });
 
-  // NUEVO: Sistema de Notificaciones (Toasts)
   const [toast, setToast] = useState<{ mensaje: string; tipo: 'success' | 'error' } | null>(null);
 
   const mostrarToast = (mensaje: string, tipo: 'success' | 'error') => {
     setToast({ mensaje, tipo });
-    setTimeout(() => setToast(null), 4000); // Desaparece después de 4 segundos
+    setTimeout(() => setToast(null), 4000); 
   };
 
-  // Estados para el Código de Invitación
   const [codigoAcceso, setCodigoAcceso] = useState("");
   const [codigoActivo, setCodigoActivo] = useState(false);
   const [cargandoCodigo, setCargandoCodigo] = useState(true);
 
   useEffect(() => {
-    setConfigEditando({ identidad, modulos, colores });
-  }, [identidad, modulos, colores]);
+    setConfigEditando({ identidad, colores });
+  }, [identidad, colores]);
 
-  // Cargar el código de acceso directamente de la tabla tenants
   useEffect(() => {
     const fetchCodigo = async () => {
       if (!tenantId) return;
@@ -88,19 +84,14 @@ export default function ConfiguracionTab() {
 
   const guardarConfiguracionTenant = async () => {
     const carrerasLimpias = (configEditando.identidad.carreras || []).filter(c => c.trim() !== "");
-    const configListaParaGuardar = {
-      ...configEditando,
-      identidad: { ...configEditando.identidad, carreras: carrerasLimpias }
-    };
-
+    
     setLoading(true);
     try {
       const { error } = await supabase
         .from("tenants")
         .update({
-          identidad: configListaParaGuardar.identidad,
-          modulos: configListaParaGuardar.modulos,
-          colores: configListaParaGuardar.colores,
+          identidad: { ...configEditando.identidad, carreras: carrerasLimpias },
+          colores: configEditando.colores,
           codigo_acceso: codigoAcceso.trim().toUpperCase(), 
           codigo_activo: codigoActivo
         })
@@ -120,7 +111,6 @@ export default function ConfiguracionTab() {
   return (
     <div className="space-y-6 relative">
 
-      {/* COMPONENTE TOAST FLOTANTE */}
       {toast && (
         <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-3.5 rounded-2xl shadow-2xl z-[200] animate-in slide-in-from-bottom-5 fade-in duration-300 font-bold text-sm flex items-center gap-3 whitespace-nowrap ${
           toast.tipo === 'success' ? 'bg-slate-900 text-white' : 'bg-red-500 text-white'
@@ -158,7 +148,6 @@ export default function ConfiguracionTab() {
           </div>
         </div>
 
-        {/* Oferta Académica */}
         <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mt-8 mb-3 border-t border-slate-100 pt-6">Oferta Académica (Carreras)</h3>
         <div className="space-y-3">
           {(configEditando.identidad.carreras || []).map((carrera, index) => (
@@ -185,7 +174,6 @@ export default function ConfiguracionTab() {
           </button>
         </div>
 
-        {/* Paleta de Colores */}
         <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1 mt-8 mb-3 border-t border-slate-100 pt-6">Paleta de Colores de la Instancia</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-1.5">
@@ -205,7 +193,6 @@ export default function ConfiguracionTab() {
         </div>
       </div>
 
-      {/* NUEVA SECCIÓN: Seguridad y Registro */}
       {!cargandoCodigo && (
         <div className="bg-white border border-slate-200 rounded-[2.5rem] p-6 md:p-8 shadow-sm">
           <h2 className="text-xl font-black text-slate-900 mb-2 flex items-center gap-2">
@@ -254,26 +241,6 @@ export default function ConfiguracionTab() {
           )}
         </div>
       )}
-
-      {/* Módulos Habilitados */}
-      <div className="bg-white border border-slate-200 rounded-[2.5rem] p-6 md:p-8 shadow-sm">
-        <h2 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-2">
-          <i className="icon-laptop text-secundario"></i> Módulos Habilitados para el Campus
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {Object.entries(configEditando.modulos).map(([moduloKey, activo]) => (
-            <div key={moduloKey} className="flex items-center justify-between p-4 bg-slate-50 border border-slate-100 rounded-2xl">
-              <span className="font-bold text-slate-700 capitalize text-sm">{moduloKey}</span>
-              <button 
-                onClick={() => setConfigEditando({...configEditando, modulos: { ...configEditando.modulos, [moduloKey]: !activo }})}
-                className={`cursor-pointer w-12 h-6 rounded-full relative transition-colors duration-300 focus:outline-none ${activo ? "bg-emerald-500" : "bg-slate-300"}`}
-              >
-                <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 shadow-sm ${activo ? "left-7" : "left-1"}`} />
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
 
       <button onClick={guardarConfiguracionTenant} disabled={loading} className="cursor-pointer w-full py-4 bg-gradient-to-t from-secundario to-primario text-white font-black rounded-2xl hover:opacity-90 active:scale-[0.98] transition-all shadow-lg disabled:opacity-50">
         {loading ? "Guardando..." : "Guardar y Publicar Cambios"}

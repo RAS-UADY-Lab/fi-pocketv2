@@ -8,7 +8,7 @@ import { useTenant } from "@/context/TenantContext";
 export default function PerfilPage() {
   const supabase = createClient();
   const router = useRouter();
-  const { modulos, identidad } = useTenant(); 
+  const { modulos, identidad, tenantId } = useTenant(); 
 
   const carrerasDisponibles = identidad.carreras || [];
 
@@ -24,12 +24,18 @@ export default function PerfilPage() {
   const [aceptoPrivacidad, setAceptoPrivacidad] = useState(false);
   const [intentoGuardar, setIntentoGuardar] = useState(false); 
   
-  // NUEVO: Referencia para el scroll automático
   const privacidadRef = useRef<HTMLDivElement>(null);
   
   // Estados para Eliminar Cuenta
   const [modalEliminarCuenta, setModalEliminarCuenta] = useState(false);
   const [textoConfirmacion, setTextoConfirmacion] = useState("");
+
+  // ✨ NUEVO: Estados para el Módulo de Soporte / Mantenimiento
+  const [modalSoporte, setModalSoporte] = useState(false);
+  const [tipoTicket, setTipoTicket] = useState<"app_soporte" | "app_sugerencia">("app_soporte");
+  const [textoTicket, setTextoTicket] = useState("");
+  const [tituloTicket, setTituloTicket] = useState("");
+  const [loadingTicket, setLoadingTicket] = useState(false);
 
   const [perfilOriginal, setPerfilOriginal] = useState<any>(null);
 
@@ -191,6 +197,42 @@ export default function PerfilPage() {
     }
   };
 
+  // ✨ NUEVO: Función para enviar el ticket de soporte
+  const enviarTicket = async () => {
+    if (!tituloTicket || !textoTicket) return;
+    setLoadingTicket(true);
+
+    // Lógica inteligente de destinatario
+    // Si es un problema físico de la escuela, le llega al admin de la facultad.
+    // Si es sobre la App Nodum, te llega a ti (developer).
+    const destinatarioFinal = "developer";
+
+    try {
+      const { error } = await supabase.from("tickets_mantenimiento").insert({
+        tenant_id: tenantId,
+        usuario_id: usuario.id,
+        tipo: tipoTicket,
+        titulo: tituloTicket,
+        descripcion: textoTicket,
+        destinatario: destinatarioFinal,
+        estado: 'pendiente'
+      });
+
+      if (error) throw error;
+      
+      alert("¡Reporte enviado exitosamente! Nuestro equipo lo revisará pronto.");
+      setModalSoporte(false);
+      setTituloTicket("");
+      setTextoTicket("");
+      setTipoTicket("app_soporte");
+    } catch (error) {
+      console.error("Error enviando ticket:", error);
+      alert("Hubo un problema al enviar tu reporte. Intenta más tarde.");
+    } finally {
+      setLoadingTicket(false);
+    }
+  };
+
   if (loading && !usuario) return <div className="p-8 text-center animate-pulse font-bold text-slate-400">Cargando...</div>;
 
   const esVerificado = perfil.membresia_estatus === "verificada";
@@ -214,7 +256,6 @@ export default function PerfilPage() {
               if (editando) {
                 if (!aceptoPrivacidad) {
                   setIntentoGuardar(true);
-                  // NUEVO: Hacemos scroll suave hacia el contenedor del aviso de privacidad
                   privacidadRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                   return;
                 }
@@ -350,7 +391,6 @@ export default function PerfilPage() {
 
         {/* CHECKBOX DE AVISO DE PRIVACIDAD */}
         {editando && (
-          // NUEVO: Agregamos el ref a este contenedor
           <div ref={privacidadRef} className={`mt-8 pt-6 border-t border-slate-100 transition-all duration-300 ${intentoGuardar && !aceptoPrivacidad ? "bg-red-50 p-4 rounded-2xl border-transparent" : ""}`}>
             <div className="flex items-start gap-3">
               <button
@@ -453,11 +493,20 @@ export default function PerfilPage() {
         </section>
       )}
 
-      {/* Botones de Zona de Peligro */}
+      {/* Botones de Zona de Peligro y Soporte */}
       <div className="flex flex-col gap-3">
+        
+        {/* ✨ NUEVO: BOTÓN DE SOPORTE UNIVERSAL */}
+        <button 
+          onClick={() => setModalSoporte(true)}
+          className="cursor-pointer w-full py-4 bg-white border border-slate-200 text-slate-700 font-black rounded-[1.5rem] hover:bg-slate-50 hover:border-primario/30 transition-all text-xs uppercase tracking-widest active:scale-[0.98] shadow-sm flex items-center justify-center gap-2"
+        >
+          <i className="icon-circle-info-solid-full text-primario text-lg"></i> Centro de Ayuda Nodum
+        </button>
+
         <button 
           onClick={async () => { await supabase.auth.signOut(); router.push("/"); }}
-          className="cursor-pointer w-full py-4 bg-slate-100 text-slate-500 font-black rounded-[1.5rem] hover:bg-slate-200 transition-all text-xs uppercase tracking-widest active:scale-[0.98]"
+          className="cursor-pointer w-full py-4 bg-slate-100 text-slate-500 font-black rounded-[1.5rem] hover:bg-slate-200 transition-all text-xs uppercase tracking-widest active:scale-[0.98] mt-4"
         >
           Cerrar Sesión
         </button>
@@ -470,7 +519,83 @@ export default function PerfilPage() {
         </button>
       </div>
 
-      {/* MODAL DE CONFIRMACIÓN DE CANCELACIÓN DE PEDIDO */}
+      {/* ✨ NUEVO: MODAL DE SOPORTE / MANTENIMIENTO */}
+      {modalSoporte && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-[2.5rem] w-full max-w-md p-6 md:p-8 shadow-2xl relative animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-black text-slate-900 tracking-tight">Centro de Ayuda</h3>
+              <button onClick={() => setModalSoporte(false)} className="cursor-pointer w-8 h-8 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-full flex justify-center items-center transition-colors active:scale-95">
+                <i className="icon-close font-bold"></i>
+              </button>
+            </div>
+
+            <p className="text-sm text-slate-500 font-medium mb-6 leading-relaxed">
+              ¿Encontraste un problema o tienes una sugerencia para mejorar la aplicación? Te escuchamos.
+            </p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 block ml-1">¿Qué deseas reportar?</label>
+                <div className="grid grid-cols-1 gap-2">
+                  <button 
+                    onClick={() => setTipoTicket("app_soporte")}
+                    className={`p-3 rounded-xl border text-left flex items-center gap-3 transition-all cursor-pointer ${tipoTicket === 'app_soporte' ? 'bg-primario/5 border-primario shadow-sm' : 'bg-white border-slate-200 opacity-60 hover:opacity-100'}`}
+                  >
+                    <i className={`icon-laptop text-xl ${tipoTicket === 'app_soporte' ? 'text-primario' : 'text-slate-400'}`}></i>
+                    <div>
+                      <p className={`text-sm font-bold ${tipoTicket === 'app_soporte' ? 'text-primario' : 'text-slate-600'}`}>Soporte de la App</p>
+                      <p className="text-[10px] font-medium text-slate-400">Problemas técnicos, errores al cargar o iniciar sesión.</p>
+                    </div>
+                  </button>
+
+                  <button 
+                    onClick={() => setTipoTicket("app_sugerencia")}
+                    className={`p-3 rounded-xl border text-left flex items-center gap-3 transition-all cursor-pointer ${tipoTicket === 'app_sugerencia' ? 'bg-amber-50 border-amber-500 shadow-sm' : 'bg-white border-slate-200 opacity-60 hover:opacity-100'}`}
+                  >
+                    <i className={`icon-star text-xl ${tipoTicket === 'app_sugerencia' ? 'text-amber-500' : 'text-slate-400'}`}></i>
+                    <div>
+                      <p className={`text-sm font-bold ${tipoTicket === 'app_sugerencia' ? 'text-amber-600' : 'text-slate-600'}`}>Sugerencia Nodum</p>
+                      <p className="text-[10px] font-medium text-slate-400">Ideas o nuevas funciones que te gustaría ver en Nodum.</p>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block ml-1">Asunto breve</label>
+                <input 
+                  placeholder="Ej. Error al ver mi perfil"
+                  className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold outline-none focus:ring-2 focus:ring-primario/20 transition-all"
+                  value={tituloTicket}
+                  onChange={(e) => setTituloTicket(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block ml-1">Descripción detallada</label>
+                <textarea 
+                  rows={3}
+                  placeholder="Explica el error o tu idea para la app..."
+                  className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-primario/20 transition-all resize-none custom-scrollbar"
+                  value={textoTicket}
+                  onChange={(e) => setTextoTicket(e.target.value)}
+                />
+              </div>
+
+              <button 
+                onClick={enviarTicket}
+                disabled={loadingTicket || !tituloTicket || !textoTicket}
+                className="w-full py-4 mt-2 bg-gradient-to-t from-secundario to-primario text-white font-black rounded-2xl hover:opacity-90 transition-all shadow-lg active:scale-95 disabled:opacity-50"
+              >
+                {loadingTicket ? 'Enviando...' : 'Enviar Reporte'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Cancelación de Pedidos */}
       {modalCancelacion && pedidoACancelar && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-[2.5rem] w-full max-w-sm p-6 md:p-8 shadow-2xl relative animate-in zoom-in-95 duration-200 text-center">
@@ -491,7 +616,7 @@ export default function PerfilPage() {
         </div>
       )}
 
-      {/* MODAL ELIMINAR CUENTA */}
+      {/* Modal Eliminar Cuenta */}
       {modalEliminarCuenta && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-[2.5rem] w-full max-w-sm p-6 md:p-8 shadow-2xl relative animate-in zoom-in-95 duration-200 text-center">
@@ -533,7 +658,7 @@ export default function PerfilPage() {
         </div>
       )}
 
-      {/* MODAL AVISO DE PRIVACIDAD */}
+      {/* Modal Aviso de Privacidad */}
       {modalPrivacidad && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-[2rem] w-full max-w-lg p-6 md:p-8 shadow-2xl relative animate-in zoom-in-95 duration-200 max-h-[85vh] flex flex-col">

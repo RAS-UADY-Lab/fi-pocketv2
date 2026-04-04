@@ -80,6 +80,16 @@ export default function HomePage() {
     (comunidad) => comunidad.plataformas && comunidad.plataformas[plataformaActiva as keyof typeof comunidad.plataformas]
   );
 
+  // ✨ LÓGICA DE AVISOS INTELIGENTES
+  const avisosActivos = arrayAvisos.filter((aviso: any) => {
+    if (aviso.mantener_activo) return true;
+    if (!aviso.fecha_expiracion) return false;
+    
+    const ahora = new Date();
+    const expiracion = new Date(aviso.fecha_expiracion);
+    return ahora < expiracion;
+  });
+
   return (
     <main className="flex flex-col h-full max-w-5xl mx-auto p-4 md:p-8 overflow-y-auto custom-scrollbar pb-24 md:pb-8">
       
@@ -133,7 +143,7 @@ export default function HomePage() {
 
         <div className="flex items-center gap-2 flex-shrink-0">
           
-          {/* BOTÓN MASTER (Solo para ti) */}
+          {/* BOTÓN MASTER */}
           {perfil?.rol === 'superadmin' && (
             <>
               <Link href="/superadmin" className="hidden md:flex items-center gap-1 px-4 py-2 bg-emerald-600 text-white font-black text-[11px] uppercase tracking-wider rounded-xl hover:bg-emerald-700 shadow-sm transition-all cursor-pointer active:scale-95">
@@ -145,7 +155,7 @@ export default function HomePage() {
             </>
           )}
 
-          {/* BOTÓN ADMIN (Para administradores de instancia y para ti) */}
+          {/* BOTÓN ADMIN */}
           {(perfil?.rol === 'admin' || perfil?.rol === 'superadmin') && (
             <>
               <Link href="/admin" className="hidden md:flex items-center gap-1 px-4 py-2 bg-purple-600 text-white font-black text-[11px] uppercase tracking-wider rounded-xl hover:bg-purple-700 shadow-sm transition-all cursor-pointer active:scale-95">
@@ -181,43 +191,51 @@ export default function HomePage() {
         <i className={`${identidad.logoIcono || 'icon-app-logo'} absolute -bottom-6 -right-4 text-9xl text-white opacity-20 transform -rotate-12 pointer-events-none`}></i>
       </header>
 
-      {/* Accesos Rápidos */}
-      {usuario && (
-      <section className="mb-10 flex-shrink-0">
-        <h2 className="text-lg font-bold text-slate-800 mb-4 px-1">Accesos Rápidos</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {modulos.mapa && (
-            <Link href="/mapa" className="flex flex-col items-center justify-center bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-primario/30 hover:shadow-md transition-all group cursor-pointer active:scale-95">
-              <div className="w-14 h-14 bg-primario/10 rounded-full flex items-center justify-center text-primario mb-3 group-hover:scale-110 transition-transform"><i className="icon-map text-2xl"></i></div>
-              <span className="font-bold text-slate-700 text-sm">Mapa del Campus</span>
-            </Link>
-          )}
-          {modulos.directorio && (
-            <Link href="/directorio" className="flex flex-col items-center justify-center bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-primario/30 hover:shadow-md transition-all group cursor-pointer active:scale-95">
-              <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 mb-3 group-hover:scale-110 transition-transform"><i className="icon-directory text-2xl"></i></div>
-              <span className="font-bold text-slate-700 text-sm">Directorio</span>
-            </Link>
-          )}
-          {modulos.portales && (
-            <Link href="/portales" className="flex flex-col items-center justify-center bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-primario/30 hover:shadow-md transition-all group cursor-pointer active:scale-95">
-              <div className="w-14 h-14 bg-amber-50 rounded-full flex items-center justify-center text-amber-600 mb-3 group-hover:scale-110 transition-transform"><i className="icon-laptop text-2xl"></i></div>
-              <span className="font-bold text-slate-700 text-sm">Portales</span>
-            </Link>
-          )}
-          {modulos.archivo && (
-            <Link href="/archivo" className="flex flex-col items-center justify-center bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-primario/30 hover:shadow-md transition-all group cursor-pointer active:scale-95">
-              <div className="w-14 h-14 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 mb-3 group-hover:scale-110 transition-transform"><i className="icon-archive text-2xl"></i></div>
-              <span className="font-bold text-slate-700 text-sm">Documentos</span>
-            </Link>
-          )}
-          {modulos.tienda && (
-            <Link href="/tieeenda" className="flex flex-col items-center justify-center bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-primario/30 hover:shadow-md transition-all group cursor-pointer active:scale-95 md:hidden">
-              <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center text-red-500 mb-3 group-hover:scale-110 transition-transform"><i className="icon-store-solid-full text-2xl"></i></div>
-              <span className="font-bold text-slate-700 text-sm">TIEEEnda</span>
-            </Link>
-          )}
-        </div>
-      </section>
+      {/* Accesos Rápidos Dinámicos */}
+      {usuario && identidad.accesos_rapidos && identidad.accesos_rapidos.length > 0 && (
+        <section className="mb-10 flex-shrink-0">
+          <h2 className="text-lg font-bold text-slate-800 mb-4 px-1">Accesos Rápidos</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {identidad.accesos_rapidos.map((acceso: any, index: number) => {
+              
+              // Validación de seguridad para iconos y colores rotativos
+              const bgColors = ["bg-primario/10", "bg-emerald-50", "bg-amber-50", "bg-blue-50"];
+              const textColors = ["text-primario", "text-emerald-600", "text-amber-600", "text-blue-600"];
+              const colorIndex = index % 4;
+
+              // Renderizamos la tarjeta
+              const CardContent = (
+                <div className="flex flex-col items-center justify-center bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:border-primario/30 hover:shadow-md transition-all group cursor-pointer active:scale-95 h-full">
+                  <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform ${bgColors[colorIndex]} ${textColors[colorIndex]}`}>
+                    <i className={`${acceso.icono} text-2xl`}></i>
+                  </div>
+                  <span className="font-bold text-slate-700 text-sm text-center leading-tight">
+                    {acceso.titulo}
+                  </span>
+                  {acceso.externo && (
+                     <i className="icon-right-arrow -rotate-45 text-[8px] text-slate-300 mt-2"></i>
+                  )}
+                </div>
+              );
+
+              // Si es un enlace externo (ej. SICEI), abrimos en nueva pestaña
+              if (acceso.externo) {
+                return (
+                  <a key={index} href={acceso.ruta} target="_blank" rel="noopener noreferrer">
+                    {CardContent}
+                  </a>
+                );
+              }
+
+              // Si es un enlace interno (ej. /mapa), usamos el Link de Next.js
+              return (
+                <Link key={index} href={acceso.ruta}>
+                  {CardContent}
+                </Link>
+              );
+            })}
+          </div>
+        </section>
       )}
 
       {/* Carrusel de Comunidades Interactivo */}
@@ -274,12 +292,12 @@ export default function HomePage() {
         )}
       </section>
 
-      {/* Avisos Rápidos Dinámicos */}
-      {arrayAvisos.length > 0 && (
+      {/* Avisos Rápidos Dinámicos (Usando el nuevo array filtrado) */}
+      {avisosActivos.length > 0 && (
         <section className="flex-shrink-0">
           <h2 className="text-lg font-bold text-slate-800 mb-4 px-1">Avisos de {identidad.organizacion}</h2>
           <div className="space-y-4">
-            {arrayAvisos.map((aviso: any) => (
+            {avisosActivos.map((aviso: any) => (
               <div key={aviso.id} className="relative bg-white border border-slate-200 rounded-[2rem] p-5 pr-20 shadow-sm flex items-start gap-4 hover:border-primario/50 hover:shadow-md transition-all group">
                 <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-500 flex-shrink-0 mt-1 border border-slate-100 group-hover:bg-primario/10 group-hover:text-primario transition-colors">
                   <i className={`${aviso.icono || 'icon-info'} text-xl`}></i>
@@ -291,7 +309,8 @@ export default function HomePage() {
                   </p>
                 </div>
                 <span className="absolute top-5 right-5 text-[10px] font-bold bg-slate-100 text-slate-500 px-2.5 py-1 rounded-md whitespace-nowrap">
-                  {aviso.tiempo}
+                  {/* Formateador dinámico de fecha basado en su creación real */}
+                  {new Date(aviso.fecha_creacion || Date.now()).toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}
                 </span>
               </div>
             ))}

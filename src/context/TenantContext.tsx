@@ -5,11 +5,13 @@ import { createClient } from "@/lib/supabase";
 
 export type Plataforma = "facebook" | "instagram" | "tiktok" | "sitio";
 
-interface Identidad { nombre: string; organizacion: string; logoIcono: string; carreras: string[]; }
-interface Modulos { mapa: boolean; directorio: boolean; portales: boolean; archivo: boolean; tienda: boolean; perfil: boolean; ieee: boolean; }
+interface AccesoRapido { titulo: string; icono: string; ruta: string; externo:boolean; }
+interface Identidad { nombre: string; organizacion: string; logoIcono: string; carreras: string[]; accesos_rapidos?: AccesoRapido[] }
+// ✨ NUEVO: Añadido "mantenimiento" a la interfaz de Módulos
+interface Modulos { mapa: boolean; directorio: boolean; portales: boolean; archivo: boolean; tienda: boolean; perfil: boolean; ieee: boolean; mantenimiento: boolean; emprendedores: boolean}
 interface Comunidad { nombre: string; handle: string; color: string; iconColor: string; plataformas: Partial<Record<Plataforma, string>>; }
 interface Colores { primario: string; secundario: string; }
-interface Aviso { id: string; titulo: string; tiempo: string; descripcion: string; icono: string; }
+export interface Aviso { id: string; titulo: string; descripcion: string; icono: string; fecha_creacion: string; fecha_expiracion: string | null; mantener_activo: boolean; }
 
 interface TenantContextType {
   tenantId: number; 
@@ -23,7 +25,8 @@ interface TenantContextType {
 const defaultContext: TenantContextType = {
   tenantId: 1, 
   identidad: { nombre: "Cargando...", organizacion: "Cargando...", logoIcono: "icon-app-logo", carreras: [] },
-  modulos: { mapa: false, directorio: false, portales: false, archivo: false, tienda: false, perfil: true, ieee: true },
+  // ✨ NUEVO: Estado por defecto del módulo de mantenimiento (apagado por seguridad)
+  modulos: { mapa: false, directorio: false, portales: false, archivo: false, tienda: false, perfil: true, ieee: true, mantenimiento: false, emprendedores: false},
   comunidades: [], colores: { primario: "#98002e", secundario: "#61116a" }, 
   edificios: [], documentos: [], portales: [], avisos: [],
   loadingConfig: true, recargarConfiguracion: async () => {},
@@ -51,10 +54,8 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       
-      // 1. Por defecto, modo invitado en FIUADY (Tenant 1)
       let currentTenantId = 1; 
 
-      // 2. Si el usuario está logueado, leemos su perfil para saber su escuela
       if (session) {
         const { data: perfil } = await supabase
           .from("perfiles")
@@ -69,7 +70,6 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
 
       setTenantId(currentTenantId);
 
-      // 3. Llamada segura a la caja negra pública en lugar de .from("tenants")
       const { data, error } = await supabase.rpc('get_tenant_public_config', { 
         p_tenant_id: currentTenantId 
       });
