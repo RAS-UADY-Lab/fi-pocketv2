@@ -1,17 +1,18 @@
 {
-  "name": "FI Pocket - Capítulo RAS",
-  "short_name": "FI Pocket",
-  "description": "Folleto informativo, directorio y mapa interactivo del campus.",
+  "name": "Nodum",
+  "short_name": "Nodum",
+  "description": "Folleto informativo, directorio y mapa interactivo.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#2563eb",
+  "theme_color": "#ffffff",
   "orientation": "portrait-primary",
   "icons": [
     {
       "src": "/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "/icon-512x512.png",

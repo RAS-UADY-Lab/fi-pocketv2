@@ -1,6 +1,7 @@
 "use client";
 
 import Link from 'next/link';
+import Image from 'next/image'; // <-- NUEVO: Importamos el componente optimizado de imágenes
 import { usePathname } from 'next/navigation';
 import { useTenant } from '@/context/TenantContext';
 import { useState, useEffect } from 'react';
@@ -11,7 +12,6 @@ export default function SideNav() {
   const pathname = usePathname();
   const supabase = createClient();
 
-  // NUEVO: Estado para saber si es invitado o usuario
   const [usuario, setUsuario] = useState<any>(null);
 
   useEffect(() => {
@@ -50,13 +50,18 @@ export default function SideNav() {
   return (
     <aside className="hidden md:flex flex-col w-72 h-full border-r border-slate-200 bg-white flex-shrink-0 z-40 shadow-sm relative">
       
-      <div className="p-6 md:p-8 flex items-center gap-4 flex-shrink-0 border-b border-slate-100/50">
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-t from-secundario to-primario flex items-center justify-center text-2xl text-white shadow-lg shadow-slate-200 flex-shrink-0">
-          <i className={identidad.logoIcono || "icon-app-logo"}></i>
-        </div>
-        <h2 className="text-2xl font-black text-slate-900 tracking-tight truncate leading-none pt-1">
-          Nodum
-        </h2>
+      {/* NUEVA SECCIÓN DEL LOGO OFICIAL */}
+      <div className="p-6 md:pl-7 md:p-8 flex items-center justify-start flex-shrink-0 border-b border-slate-100/50">
+        <Link href="/" className="cursor-pointer active:scale-95 transition-transform">
+          <Image 
+            src="/logo-horizontal.svg" // <-- Asegúrate de que el archivo se llame así en la carpeta public
+            alt="Nodum Logo" 
+            width={180} 
+            height={50} 
+            priority // <-- Le dice a Next.js que cargue esta imagen de inmediato
+            className="w-auto h-10 md:h-12 object-contain" 
+          />
+        </Link>
       </div>
 
       <nav className="flex-1 px-4 md:px-6 py-6 overflow-y-auto custom-scrollbar space-y-1.5">
@@ -76,7 +81,6 @@ export default function SideNav() {
           </Link>
         )}
         
-        {/* RESTRICCIÓN: Solo si el módulo está activo Y hay usuario logueado */}
         {modulos.archivo && usuario && (
           <Link href="/archivo" className={linkClasses('/archivo')}>
             <i className={`icon-archive text-xl ${isActive('/archivo') ? "scale-110 transition-transform" : ""}`}></i> Archivo

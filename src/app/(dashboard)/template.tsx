@@ -5,10 +5,10 @@ import { motion } from "framer-motion";
 export default function Template({ children }: { children: React.ReactNode }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
+      initial={{ opacity: 0, scale: 0.98, filter: "blur(4px)" }}
+      animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
       transition={{ duration: 0.25, ease: "easeOut" }}
-      className="h-full" /* Solo h-full para respetar el contenedor padre */
+      className="h-full w-full"
     >
       {children}
     </motion.div>

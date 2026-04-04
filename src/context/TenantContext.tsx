@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase";
 
 export type Plataforma = "facebook" | "instagram" | "tiktok" | "sitio";
 
-// NUEVO: Agregamos 'carreras' como arreglo de strings a la Identidad
 interface Identidad { nombre: string; organizacion: string; logoIcono: string; carreras: string[]; }
 interface Modulos { mapa: boolean; directorio: boolean; portales: boolean; archivo: boolean; tienda: boolean; perfil: boolean; ieee: boolean; }
 interface Comunidad { nombre: string; handle: string; color: string; iconColor: string; plataformas: Partial<Record<Plataforma, string>>; }
@@ -23,13 +22,12 @@ interface TenantContextType {
 
 const defaultContext: TenantContextType = {
   tenantId: 1, 
-  // NUEVO: Inicializamos carreras como un arreglo vacío
   identidad: { nombre: "Cargando...", organizacion: "Cargando...", logoIcono: "icon-app-logo", carreras: [] },
   modulos: { mapa: false, directorio: false, portales: false, archivo: false, tienda: false, perfil: true, ieee: true },
   comunidades: [], colores: { primario: "#98002e", secundario: "#61116a" }, 
   edificios: [], documentos: [], portales: [], avisos: [],
   loadingConfig: true, recargarConfiguracion: async () => {},
-};
+}
 
 const TenantContext = createContext<TenantContextType>(defaultContext);
 
@@ -52,8 +50,11 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       const { data: { session } } = await supabase.auth.getSession();
+      
+      // 1. Por defecto, modo invitado en FIUADY (Tenant 1)
       let currentTenantId = 1; 
 
+      // 2. Si el usuario está logueado, leemos su perfil para saber su escuela
       if (session) {
         const { data: perfil } = await supabase
           .from("perfiles")
@@ -68,14 +69,12 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
 
       setTenantId(currentTenantId);
 
-      const { data, error } = await supabase
-        .from("tenants")
-        .select("*")
-        .eq("id", currentTenantId)
-        .single();
+      // 3. Llamada segura a la caja negra pública en lugar de .from("tenants")
+      const { data, error } = await supabase.rpc('get_tenant_public_config', { 
+        p_tenant_id: currentTenantId 
+      });
 
       if (data && !error) {
-        // Aseguramos que si 'carreras' no existe en la BD, lo inicie como arreglo vacío
         const dataIdentidad = data.identidad || {};
         setIdentidad({ ...defaultContext.identidad, ...dataIdentidad, carreras: dataIdentidad.carreras || [] });
         setModulos({ ...defaultContext.modulos, ...(data.modulos || {}) });
@@ -95,6 +94,16 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     cargarConfiguracion();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        cargarConfiguracion();
+      }
+    });
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
