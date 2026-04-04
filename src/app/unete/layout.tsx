@@ -6,8 +6,8 @@ import "../icomoon.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Lleva Nodum a tu campus | E-nnova Design",
-  description: "Digitaliza tu experiencia universitaria con mapas, directorios y TIEEEnda inteligente.",
+  title: "Lleva Nodum a tu institución",
+  description: "Digitaliza tu experiencia universitaria con mapas, directorios y demás utilidades para la vida universitaria.",
 };
 
 export default function UneteLayout({
